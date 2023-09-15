@@ -56,7 +56,7 @@ if uploaded_file is not None:
 
             json_body = json.dumps({"inputs": inputs})
             batch_response = requests.request(
-                "POST", DATA_WAREHOUSE_API_URL, data=json_body, headers=headers
+                "POST", DATA_WAREHOUSE_API_URL + "/bulk_skiptrace", data=json_body, headers=headers
             )
 
             if batch_response.status_code < 200 or batch_response.status_code > 299:
