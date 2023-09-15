@@ -17,19 +17,13 @@ BATCH_SIZE = 10
 Input your file below that you would like skiptraced. Required headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP". Optional headers are "LLC NAME", "FIRST NAME", "LAST NAME".
 """
 
-@st.cache
-def run_skiptracing_on_file(file):
-    # Can be used wherever a "file-like" object is accepted:
-    cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "LLC NAME", "FIRST NAME", "LAST NAME"]
-    df = pd.read_csv(file, usecols=lambda c: c in set(cols), keep_default_na=False, dtype=object)
-    st.title('Input Data')
-    st.write(df)
-
+def run_skiptracing_on_df(df):
     def chunker(seq, size):
         return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
     output_list = []
     progress_bar = st.progress(0, text="SKIPTRACING IN PROGRESS")
+    progress = st.empty()
     for batch in chunker(df, BATCH_SIZE):
         inputs = []
         try: 
@@ -92,12 +86,14 @@ def run_skiptracing_on_file(file):
         except:
             st.error('Error skiptracing. Please ping Jesse for assistance.', icon="🚨")
         progress_bar.progress(len(output_list) / len(df))
+        progress.write("%i/%i records processed" % (len(output_list), len(df)))
 
     # columns=['ADDRESS STREET', 'ADDRESS CITY', 'ADDRESS ZIP', 'LLC NAME' 'FIRST NAME', 'LAST NAME', 'AGE', 'PHONE', 'PRIMARY NAME', 'PRIMARY EMAIL', 'ALL PHONES', 'ALL NAMES', 'ALL EMAILS']
     output_df = pd.DataFrame(output_list)
     st.title('Output Data')
     st.write(output_df)
 
+    @st.cache
     def convert_df(df):
         # IMPORTANT: Cache the conversion to prevent computation on every rerun
         return df.to_csv().encode('utf-8')
@@ -111,7 +107,21 @@ def run_skiptracing_on_file(file):
         mime='text/csv',
     )
 
+# Disable the submit button after it is clicked
+def disable():
+    st.session_state.disabled = True
 
-uploaded_file = st.file_uploader("Upload File(s)", type=None, key=None, help=None, on_change=None, args=None, kwargs=None, disabled=False, label_visibility="visible")
+# Initialize disabled for form_submit_button to False
+if "disabled" not in st.session_state:
+    st.session_state.disabled = False
+
+uploaded_file = st.file_uploader("Upload File(s)", type=None, label_visibility="visible")
 if uploaded_file is not None:
-    run_skiptracing_on_file(uploaded_file)
+     # Can be used wherever a "file-like" object is accepted:
+    cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "LLC NAME", "FIRST NAME", "LAST NAME"]
+    df = pd.read_csv(uploaded_file, usecols=lambda c: c in set(cols), keep_default_na=False, dtype=object)
+    st.title('Input Data')
+    st.write(df)
+    do_skiptrace = st.button("Run Skiptracing", key='button', on_click=disable, disabled=st.session_state.disabled)
+    if do_skiptrace:
+        run_skiptracing_on_df(df)
