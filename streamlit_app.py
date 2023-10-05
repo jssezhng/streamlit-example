@@ -8,13 +8,15 @@ import requests
 
 
 DATA_WAREHOUSE_API_URL = st.secrets['data_warehouse_api_url']
+# for local dev
+# DATA_WAREHOUSE_API_URL = 'http://localhost:8010'
 DATA_WAREHOUSE_API_KEY = st.secrets['data_warehouse_api_key']
 BATCH_SIZE = 10
 
 """
 # Skiptracing Tool
 
-Input your file below that you would like skiptraced. Required headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP". Optional headers are "LLC NAME", "FIRST NAME", "LAST NAME".
+Input your file below that you would like skiptraced. Required headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE". Optional headers are "LLC NAME", "FIRST NAME", "LAST NAME".
 """
 
 def run_skiptracing_on_df(df):
@@ -31,6 +33,7 @@ def run_skiptracing_on_df(df):
                 address_street = batch['ADDRESS STREET'][row]
                 address_city = batch['ADDRESS CITY'][row]
                 address_zip = batch['ADDRESS ZIP'][row]
+                address_state = batch['ADDRESS STATE'][row]
                 llc_name = batch['LLC NAME'][row] if 'LLC NAME' in batch.columns else ''
                 first_name = batch['FIRST NAME'][row] if 'FIRST NAME' in batch.columns else ''
                 last_name = batch['LAST NAME'][row] if 'LAST NAME' in batch.columns else ''
@@ -38,6 +41,7 @@ def run_skiptracing_on_df(df):
                     "address_street": address_street,
                     "address_city": address_city,
                     "address_zip": address_zip,
+                    "address_state": address_state
                     "llc_name": llc_name,
                     "first_name": first_name,
                     "last_name": last_name,
@@ -63,6 +67,7 @@ def run_skiptracing_on_df(df):
                         'ADDRESS STREET': inputs[i].get('address_street', ''),
                         'ADDRESS CITY': inputs[i].get('address_city', ''),
                         'ADDRESS ZIP': inputs[i].get('address_zip', ''),
+                        'ADDRESS STATE': inputs[i].get('address_state', '')
                         'LLC NAME': inputs[i].get('llc_name', ''),
                         'FIRST NAME': inputs[i].get('first_name', ''),
                         'LAST NAME': inputs[i].get('last_name', ''),
@@ -79,6 +84,7 @@ def run_skiptracing_on_df(df):
                         'ADDRESS STREET': inputs[i].get('address_street', ''),
                         'ADDRESS CITY': inputs[i].get('address_city', ''),
                         'ADDRESS ZIP': inputs[i].get('address_zip', ''),
+                        'ADDRESS STATE': inputs[i].get('address_state', '')
                         'LLC NAME': inputs[i].get('llc_name', ''),
                         'FIRST NAME': inputs[i].get('first_name', ''),
                         'LAST NAME': inputs[i].get('last_name', '')
@@ -88,7 +94,7 @@ def run_skiptracing_on_df(df):
         progress_bar.progress(len(output_list) / len(df))
         progress.write("%i/%i records processed" % (len(output_list), len(df)))
 
-    # columns=['ADDRESS STREET', 'ADDRESS CITY', 'ADDRESS ZIP', 'LLC NAME' 'FIRST NAME', 'LAST NAME', 'AGE', 'PHONE', 'PRIMARY NAME', 'PRIMARY EMAIL', 'ALL PHONES', 'ALL NAMES', 'ALL EMAILS']
+    # columns=['ADDRESS STREET', 'ADDRESS CITY', 'ADDRESS ZIP', 'ADDRESS STATE', 'LLC NAME' 'FIRST NAME', 'LAST NAME', 'AGE', 'PHONE', 'PRIMARY NAME', 'PRIMARY EMAIL', 'ALL PHONES', 'ALL NAMES', 'ALL EMAILS']
     output_df = pd.DataFrame(output_list)
     st.title('Output Data')
     st.write(output_df)
@@ -118,7 +124,7 @@ if "disabled" not in st.session_state:
 uploaded_file = st.file_uploader("Upload File(s)", type=None, label_visibility="visible")
 if uploaded_file is not None:
      # Can be used wherever a "file-like" object is accepted:
-    cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "LLC NAME", "FIRST NAME", "LAST NAME"]
+    cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME"]
     df = pd.read_csv(uploaded_file, usecols=lambda c: c in set(cols), keep_default_na=False, dtype=object)
     st.title('Input Data')
     st.write(df)
