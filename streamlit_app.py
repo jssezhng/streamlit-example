@@ -105,7 +105,7 @@ with tab2:
     Input your file below that you would like skiptraced. Headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL". You must have either contact information or some combination of address information and contact information
     """
 
-    def run_skiptracing_on_df(df):
+    def run_skiptracing_on_df(df, include_linked_properties):
         def chunker(seq, size):
             return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
@@ -141,7 +141,7 @@ with tab2:
                     "accept": "application/json",
                 }
 
-                json_body = json.dumps({"inputs": inputs})
+                json_body = json.dumps({"inputs": inputs, "include_linked_properties": include_linked_properties})
                 batch_response = requests.request(
                     "POST", DATA_WAREHOUSE_API_URL + "/bulk_skiptrace", data=json_body, headers=headers
                 )
@@ -223,6 +223,7 @@ with tab2:
         df = pd.read_csv(uploaded_file, usecols=lambda c: c in set(cols), keep_default_na=False, dtype=object)
         st.title('Input Data')
         st.write(df)
+        include_linked_properties = st.checkbox('Include Linked Properties')
         do_skiptrace = st.button("Run Skiptracing", key='bulk_skiptrace', on_click=disable, disabled=st.session_state.disabled)
         if do_skiptrace:
-            run_skiptracing_on_df(df)
+            run_skiptracing_on_df(df, include_linked_properties)
