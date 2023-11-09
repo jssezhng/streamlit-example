@@ -102,7 +102,7 @@ with tab2:
     """
     # Bulk Skiptracing Tool
 
-    Input your file below that you would like skiptraced. Headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL". You must have either contact information or some combination of address information and contact information
+    Input your file below that you would like skiptraced. Headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL", "PHONE". You must have either contact information or some combination of address information and contact information
     """
 
     def run_skiptracing_on_df(df, include_linked_properties):
@@ -124,6 +124,7 @@ with tab2:
                     first_name = batch['FIRST NAME'][row] if 'FIRST NAME' in batch.columns else ''
                     last_name = batch['LAST NAME'][row] if 'LAST NAME' in batch.columns else ''
                     email = batch['EMAIL'][row] if 'EMAIL' in batch.columns else ''
+                    phone = batch['PHONE'][row] if 'PHONE' in batch.columns else ''
                     inputs.append({
                         "address_street": address_street,
                         "address_city": address_city,
@@ -133,6 +134,7 @@ with tab2:
                         "first_name": first_name,
                         "last_name": last_name,
                         "email": email,
+                        "phone": phone
                     })
 
                 headers = {
@@ -219,7 +221,7 @@ with tab2:
     uploaded_file = st.file_uploader("Upload File(s)", type=None, label_visibility="visible")
     if uploaded_file is not None:
         # Can be used wherever a "file-like" object is accepted:
-        cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL"]
+        cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL", "PHONE"]
         df = pd.read_csv(uploaded_file, usecols=lambda c: c in set(cols), keep_default_na=False, dtype=object)
         st.title('Input Data')
         st.write(df)
