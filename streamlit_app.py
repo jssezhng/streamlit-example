@@ -26,6 +26,12 @@ def levenshtein_distance(str1, str2):
     distance += max(counter.values())
     return distance
 
+# displays 20101201 as 2010-12-01
+def display_dates(date: str):
+    if not date:
+        return ''
+    return date[:4] + '-' + date[4:6] + '-' + date[6:]
+
 tab1, tab2 = st.tabs(["Individual Skiptrace", "Bulk Skiptrace"])
 with tab1:
     """
@@ -81,6 +87,12 @@ with tab1:
                 st.title('Name: ' + response.get('primary_name'))
                 st.title('Phone: ' + response.get('phone'))
                 st.title('Email: ' + response.get('primary_email'))
+                if len(response.get('all_emails')) > 0: 
+                    response['all_emails'] = [{"email": email.get('email'), "first_seen": display_dates(email.get('first_seen')), "last_seen": display_dates(email.get('last_seen'))} for email in response.get('all_emails') if email != response.get('primary_email')]
+                if len(response.get('all_phones')) > 0: 
+                    response['all_phones'] = [{"phone": phone.get('phone'), "first_seen": display_dates(phone.get('first_seen')), "last_seen": display_dates(phone.get('last_seen'))} for phone in response.get('all_phones') if phone != response.get('phone')]
+                if len(response.get('all_addresses')) > 0: 
+                    response['all_addresses'] = [{"formatted_address": address.get('formatted_address'), "first_seen": display_dates(address.get('first_seen')), "last_seen": display_dates(address.get('last_seen'))} for address in response.get('all_addresses') if address != response.get('address_street')]
                 st.write(response)
                 st.divider()
 
@@ -139,7 +151,7 @@ with tab2:
 
                 for i, res in enumerate(batch_response.json().get('data', [])):
                     if res is not None:
-                        output_list.append({
+                        output = {
                             'ADDRESS STREET': inputs[i].get('address_street', ''),
                             'ADDRESS CITY': inputs[i].get('address_city', ''),
                             'ADDRESS ZIP': inputs[i].get('address_zip', ''),
@@ -151,10 +163,17 @@ with tab2:
                             'PHONE': res.get('phone'),
                             'PRIMARY NAME': res.get('primary_name'),
                             'PRIMARY EMAIL': res.get('primary_email'),
-                            'ALL PHONES': res.get('all_phones'),
-                            'ALL NAMES': res.get('all_names'),
-                            'ALL EMAILS': res.get('all_emails'),
-                        })
+                            'ALL NAMES': res.get('all_names')
+                        }
+                        output['ALL PHONES'] = [json.dumps({"phone": phone.get('phone'), "first_seen": display_dates(phone.get('first_seen')), "last_seen": display_dates(phone.get('last_seen'))}) for phone in res.get('all_phones', [])]
+                        output['ALL EMAILS'] = [json.dumps({"email": email.get('email'), "first_seen": display_dates(email.get('first_seen')), "last_seen": display_dates(email.get('last_seen'))}) for email in res.get('all_emails', [])]
+                        output['LINKED PROPERTY COUNT'] = len(res.get('linked_properties', []))
+                        linked_property_count = 0
+                        for linked_property in res.get('linked_properties', []):
+                            linked_property_count += 1
+                            output['LINKED PROPERTY ' + str(linked_property_count)+ ' ADDRESS'] = linked_property.get('formatted_address')
+                            output['LINK PROPERTY ' + str(linked_property_count) + ' DETAILS'] = linked_property
+                        output_list.append(output)
                     else:
                         output_list.append({
                             'ADDRESS STREET': inputs[i].get('address_street', ''),
@@ -200,7 +219,7 @@ with tab2:
     uploaded_file = st.file_uploader("Upload File(s)", type=None, label_visibility="visible")
     if uploaded_file is not None:
         # Can be used wherever a "file-like" object is accepted:
-        cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME"]
+        cols = ["ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL"]
         df = pd.read_csv(uploaded_file, usecols=lambda c: c in set(cols), keep_default_na=False, dtype=object)
         st.title('Input Data')
         st.write(df)
