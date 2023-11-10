@@ -102,7 +102,7 @@ with tab2:
     """
     # Bulk Skiptracing Tool
 
-    Input your file below that you would like skiptraced. Headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL", "PHONE". You must have either contact information or some combination of address information and contact information
+    Input your file below that you would like skiptraced. Headers are "ADDRESS STREET", "ADDRESS CITY", "ADDRESS ZIP", "ADDRESS STATE", "LLC NAME", "FIRST NAME", "LAST NAME", "EMAIL", "PHONE". You must have either contact information or some combination of address information and contact information. Limit input to 1000 rows at a time.
     """
 
     def run_skiptracing_on_df(df, include_linked_properties):
@@ -112,6 +112,7 @@ with tab2:
         output_list = []
         progress_bar = st.progress(0, text="SKIPTRACING IN PROGRESS")
         progress = st.empty()
+
         for batch in chunker(df, BATCH_SIZE):
             inputs = []
             try: 
@@ -172,9 +173,9 @@ with tab2:
                         output['LINKED PROPERTY COUNT'] = len(res.get('linked_properties', []))
                         linked_property_count = 0
                         for linked_property in res.get('linked_properties', []):
+                            if linked_property_count > 10: continue
                             linked_property_count += 1
                             output['LINKED PROPERTY ' + str(linked_property_count)+ ' ADDRESS'] = linked_property.get('formatted_address')
-                            output['LINK PROPERTY ' + str(linked_property_count) + ' DETAILS'] = linked_property
                         output_list.append(output)
                     else:
                         output_list.append({
@@ -191,7 +192,6 @@ with tab2:
             progress_bar.progress(len(output_list) / len(df))
             progress.write("%i/%i records processed" % (len(output_list), len(df)))
 
-        # columns=['ADDRESS STREET', 'ADDRESS CITY', 'ADDRESS ZIP', 'ADDRESS STATE', 'LLC NAME' 'FIRST NAME', 'LAST NAME', 'AGE', 'PHONE', 'PRIMARY NAME', 'PRIMARY EMAIL', 'ALL PHONES', 'ALL NAMES', 'ALL EMAILS']
         output_df = pd.DataFrame(output_list)
         st.title('Output Data')
         st.write(output_df)
